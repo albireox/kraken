@@ -1,29 +1,14 @@
 [project]
 name = "lvmgort"
-version = "1.10.2a0"
+version = "1.11.0"
 description = "The brains of LVM observing"
 authors = [
     { name = "José Sánchez-Gallego", email = "gallegoj@uw.edu" }
 ]
 license = { text = "BSD-3-Clause" }
-readme = "README.md"
 requires-python = ">=3.10,<4"
 
 dependencies = [
-    "sdsstools>=1.8.1",
-    "sdss-clu>=2.3.1",
-    "httpx>=0.27.0",
-    "astropy>=6.0.0; python_version<'3.11'",
-    "astropy>=7.0.0; python_version>='3.11'",
-    "peewee>=3.16.2",
-    "psycopg2-binary>=2.9.6",
-    "unclick>=0.1.0",
-    "rich>=13.4.2",
-    "polars>=1.0.0",
-    "redis[hiredis]>=5.0.3",
-    "pydantic>=2.9.2",
-    "lvmopstools>=0.5.9",
-    "typer>=0.15.2",
 ]
 
 [project.urls]
