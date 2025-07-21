@@ -7,17 +7,33 @@ use serde::{Deserialize, Serialize};
 #[command(version, about, long_about = None)]
 #[command(styles = CLAP_STYLING)]
 pub struct Args {
-    /// Version to release
-    #[arg(value_name = "NEW-VERSION")]
+    /// Version to release.
+    #[arg()]
     pub new_version: String,
 
-    /// Changelog date format
+    /// Changelog date format.
     #[arg(long, value_enum)]
     pub changelog_date_format: Option<ChangelogDateFormat>,
 
-    /// Path to the CHANGELOG file
+    /// Path to the CHANGELOG file.
     #[arg(long)]
     pub changelog_path: Option<String>,
+
+    /// Bump the version after release.
+    #[arg(long)]
+    pub bump_after_release: bool,
+
+    /// Do not bump the version after release.
+    #[arg(long, conflicts_with = "bump_after_release")]
+    pub no_bump_after_release: bool,
+
+    /// Commit changes to the git repository.
+    #[arg(long, default_value_t = true)]
+    pub commit_changes: bool,
+
+    /// Do not commit changes to the git repository.
+    #[arg(long, conflicts_with = "commit_changes")]
+    pub no_commit_changes: bool,
 }
 
 #[derive(Copy, Clone, ValueEnum, Debug, Serialize, Deserialize)]

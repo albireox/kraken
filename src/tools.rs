@@ -1,9 +1,9 @@
 use colored::Colorize;
 use serde::{Deserialize, Serialize};
-use std::process::Command;
+use std::process::{Command, Stdio};
 use version_compare::Version;
 
-use crate::config::{DEFAULT_KRAKEN_CONFIG, KrakenConfig};
+use crate::config::KrakenConfig;
 
 pub fn check_uv_version() -> Result<String, String> {
     // Checks if the `uv` command is available and retrieves its version.
@@ -61,14 +61,44 @@ pub fn read_pyproject() -> Result<PyProject, String> {
 
     let mut pyproject: PyProject = match toml::from_str(&content) {
         Ok(pyproject) => pyproject,
-        Err(e) => exit_with_error("Failed to parse pyproject.toml: ".to_string() + &e.to_string()),
+        Err(e) => return Err("Failed to parse pyproject.toml: ".to_string() + &e.to_string()),
     };
 
     if let None = pyproject.kraken {
-        pyproject.kraken = Some(DEFAULT_KRAKEN_CONFIG);
-    };
+        pyproject.kraken = Some(KrakenConfig::default());
+    }
 
     Ok(pyproject)
+}
+
+pub fn get_package_version() -> Result<String, String> {
+    // Retrieves the package version from `pyproject.toml`.
+
+    let result = Command::new("uv").args(["version", "--short"]).output();
+
+    if let Err(e) = result {
+        return Err(format!("Failed to get package version: {}", e));
+    }
+
+    let output = result.unwrap();
+
+    return Ok(String::from_utf8_lossy(&output.stdout).trim().to_string());
+}
+
+pub fn update_version(release_version: &str) -> Result<(), String> {
+    // Updates the version in `pyproject.toml`.
+
+    // Run the uv version command.
+    if let Err(e) = Command::new("uv")
+        .args(["version", release_version])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+    {
+        return Err(format!("Failed to update uv version: {}", e));
+    }
+
+    Ok(())
 }
 
 pub fn exit_with_error(message: String) -> ! {
@@ -76,4 +106,54 @@ pub fn exit_with_error(message: String) -> ! {
 
     eprintln!("{}", format!("Error: {}", message).red());
     std::process::exit(1);
+}
+
+pub fn git_add_commit_push(commit_message: String) -> Result<(), String> {
+    // Adds, commits, and pushes changes to the git repository.
+
+    for file in &vec!["pyproject.toml", "CHANGELOG.md", "uv.lock"] {
+        if let Err(e) = Command::new("git")
+            .args(["add", file])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+        {
+            return Err(format!("Failed to add {} to git: {}", file, e));
+        }
+    }
+
+    if let Err(e) = Command::new("git")
+        .args(["commit", "-m", commit_message.as_str()])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+    {
+        return Err(format!("Failed to commit changes to git: {}", e));
+    }
+
+    if let Err(e) = Command::new("git")
+        .args(["push"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+    {
+        return Err(format!("Failed to push changes to git: {}", e));
+    }
+
+    Ok(())
+}
+
+pub fn bump_to_prerelease() -> Result<(), String> {
+    // Bumps the version to a pre-release version.
+    let result = Command::new("uv")
+        .args(["version", "--bump", "patch", "--bump", "alpha"])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+
+    if let Err(e) = result {
+        return Err(format!("Failed to bump version to pre-release: {}", e));
+    }
+
+    Ok(())
 }

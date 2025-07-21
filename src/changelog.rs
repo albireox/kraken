@@ -57,10 +57,7 @@ pub fn update_changelog(new_version: &str, config: &KrakenConfig) -> Result<(), 
     if !next_release_re.is_match(&contents) {
         return Err("Next release header not found in the changelog.".to_string());
     }
-    println!(
-        "{}",
-        "$1".to_string() + &format!("{} - {}\n", new_version, formatted_date)
-    );
+
     // Replace the "Next release" header with the current date.
     let next_release_replace_re =
         Regex::new(r"(?mi)^(#+\s*)(Next (release|version)).*\n$").unwrap();
