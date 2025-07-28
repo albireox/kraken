@@ -8,7 +8,7 @@ use crate::cli::{Args, Parser};
 use crate::config::update_config;
 use crate::tools::{
     bump_to_prerelease, check_uv_version, exit_with_error, get_package_version,
-    git_add_commit_push, read_pyproject, update_version,
+    git_add_commit_tag_push, read_pyproject, update_version,
 };
 use colored::Colorize;
 
@@ -46,7 +46,7 @@ fn main() {
     // Add, commit, and push changes to the git repository.
     if let Some(true) = kraken_config.commit_changes {
         let commit_message = format!("Release {}", args.new_version);
-        if let Err(e) = git_add_commit_push(commit_message) {
+        if let Err(e) = git_add_commit_tag_push(commit_message) {
             exit_with_error(e);
         }
 
@@ -69,7 +69,7 @@ fn main() {
 
             // Commit the changes after bumping to pre-release.
             let commit_message = format!("Bump version to {}", new_version.as_ref().unwrap());
-            if let Err(e) = git_add_commit_push(commit_message) {
+            if let Err(e) = git_add_commit_tag_push(commit_message) {
                 exit_with_error(e);
             }
 
