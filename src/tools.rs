@@ -108,7 +108,7 @@ pub fn exit_with_error(message: String) -> ! {
     std::process::exit(1);
 }
 
-pub fn git_add_commit_tag_push(commit_message: String) -> Result<(), String> {
+pub fn git_add_commit_tag_push(commit_message: String, tag: bool) -> Result<(), String> {
     // Adds, commits, and pushes changes to the git repository.
 
     for file in &vec!["pyproject.toml", "CHANGELOG.md", "uv.lock"] {
@@ -142,28 +142,30 @@ pub fn git_add_commit_tag_push(commit_message: String) -> Result<(), String> {
         return Err(format!("Failed to push changes to git: {}", e));
     }
 
-    if let Err(e) = Command::new("git")
-        .args([
-            "tag",
-            "-a",
-            release_version,
-            "-m",
-            format!("Release {}", release_version).as_str(),
-        ])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-    {
-        return Err(format!("Failed to create git tag: {}", e));
-    }
+    if tag {
+        if let Err(e) = Command::new("git")
+            .args([
+                "tag",
+                "-a",
+                release_version,
+                "-m",
+                format!("Release {}", release_version).as_str(),
+            ])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+        {
+            return Err(format!("Failed to create git tag: {}", e));
+        }
 
-    if let Err(e) = Command::new("git")
-        .args(["push", "--tags"])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-    {
-        return Err(format!("Failed to push --tags: {}", e));
+        if let Err(e) = Command::new("git")
+            .args(["push", "--tags"])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+        {
+            return Err(format!("Failed to push --tags: {}", e));
+        }
     }
 
     Ok(())

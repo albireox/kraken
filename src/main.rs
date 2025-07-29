@@ -46,7 +46,7 @@ fn main() {
     // Add, commit, and push changes to the git repository.
     if let Some(true) = kraken_config.commit_changes {
         let commit_message = format!("Release {}", args.new_version);
-        if let Err(e) = git_add_commit_tag_push(commit_message) {
+        if let Err(e) = git_add_commit_tag_push(commit_message, true) {
             exit_with_error(e);
         }
 
@@ -69,7 +69,7 @@ fn main() {
 
             // Commit the changes after bumping to pre-release.
             let commit_message = format!("Bump version to {}", new_version.as_ref().unwrap());
-            if let Err(e) = git_add_commit_tag_push(commit_message) {
+            if let Err(e) = git_add_commit_tag_push(commit_message, false) {
                 exit_with_error(e);
             }
 
