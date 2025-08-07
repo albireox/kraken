@@ -35,7 +35,7 @@ pub fn update_changelog(new_version: &str, config: &KrakenConfig) -> Result<(), 
 
     let date_format = config.changelog_date_format.unwrap();
     let formatted_date = match date_format {
-        ChangelogDateFormat::Long => current_date.format("%B %d, %Y").to_string(),
+        ChangelogDateFormat::Long => current_date.format("%B %-d, %Y").to_string(),
         ChangelogDateFormat::Short => current_date.format("%Y-%m-%d").to_string(),
         _ => return Err("Unsupported date format for changelog.".to_string()),
     };
