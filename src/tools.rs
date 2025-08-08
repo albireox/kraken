@@ -89,13 +89,12 @@ pub fn update_version(release_version: &str) -> Result<(), String> {
     // Updates the version in `pyproject.toml`.
 
     // Run the uv version command.
-    if let Err(e) = Command::new("uv")
-        .args(["version", release_version])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-    {
-        return Err(format!("Failed to update uv version: {}", e));
+    if let Err(e) = execute_command(
+        "uv",
+        &["version", release_version],
+        "Failed to update uv version",
+    ) {
+        return Err(e);
     }
 
     Ok(())
@@ -108,63 +107,63 @@ pub fn exit_with_error(message: String) -> ! {
     std::process::exit(1);
 }
 
+pub fn execute_command(command: &str, args: &[&str], error_message: &str) -> Result<(), String> {
+    match Command::new(command)
+        .args(args)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+    {
+        Ok(status) if status.success() => Ok(()),
+        Ok(status) => Err(format!(
+            "{}: command returned code {}",
+            error_message,
+            status.code().unwrap()
+        )),
+        Err(e) => Err(format!("{}: {}", error_message, e)),
+    }
+}
+
 pub fn git_add_commit_tag_push(commit_message: String, tag: bool) -> Result<(), String> {
     // Adds, commits, and pushes changes to the git repository.
 
     for file in &vec!["pyproject.toml", "CHANGELOG.md", "uv.lock"] {
-        if let Err(e) = Command::new("git")
-            .args(["add", file])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-        {
-            return Err(format!("Failed to add {} to git: {}", file, e));
+        if let Err(e) = execute_command("git", &["add", file], "Failed to add file to git") {
+            return Err(e);
         }
     }
 
     let release_version = &get_package_version().unwrap();
 
-    if let Err(e) = Command::new("git")
-        .args(["commit", "-m", commit_message.as_str()])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-    {
-        return Err(format!("Failed to commit changes to git: {}", e));
+    if let Err(e) = execute_command(
+        "git",
+        &["commit", "-m", commit_message.as_str()],
+        "Failed to commit changes to git",
+    ) {
+        return Err(e);
     }
 
-    if let Err(e) = Command::new("git")
-        .args(["push"])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-    {
-        return Err(format!("Failed to push changes to git: {}", e));
+    if let Err(e) = execute_command("push", &[], "Failed to push changes to git") {
+        return Err(e);
     }
 
     if tag {
-        if let Err(e) = Command::new("git")
-            .args([
+        if let Err(e) = execute_command(
+            "git",
+            &[
                 "tag",
                 "-a",
                 release_version,
                 "-m",
                 format!("Release {}", release_version).as_str(),
-            ])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-        {
-            return Err(format!("Failed to create git tag: {}", e));
+            ],
+            "Failed to create git tag",
+        ) {
+            return Err(e);
         }
 
-        if let Err(e) = Command::new("git")
-            .args(["push", "--tags"])
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .status()
-        {
-            return Err(format!("Failed to push --tags: {}", e));
+        if let Err(e) = execute_command("push", &["--tags"], "Failed to push --tags to git") {
+            return Err(e);
         }
     }
 
@@ -173,14 +172,12 @@ pub fn git_add_commit_tag_push(commit_message: String, tag: bool) -> Result<(), 
 
 pub fn bump_to_prerelease() -> Result<(), String> {
     // Bumps the version to a pre-release version.
-    let result = Command::new("uv")
-        .args(["version", "--bump", "patch", "--bump", "alpha"])
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status();
-
-    if let Err(e) = result {
-        return Err(format!("Failed to bump version to pre-release: {}", e));
+    if let Err(e) = execute_command(
+        "uv",
+        &["version", "--bump", "patch", "--bump", "alpha"],
+        "Failed to bump version to pre-release",
+    ) {
+        return Err(e);
     }
 
     Ok(())
