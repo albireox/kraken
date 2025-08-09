@@ -143,7 +143,7 @@ pub fn git_add_commit_tag_push(commit_message: String, tag: bool) -> Result<(), 
         return Err(e);
     }
 
-    if let Err(e) = execute_command("push", &[], "Failed to push changes to git") {
+    if let Err(e) = execute_command("git", &["push"], "Failed to push changes to git") {
         return Err(e);
     }
 
@@ -162,7 +162,8 @@ pub fn git_add_commit_tag_push(commit_message: String, tag: bool) -> Result<(), 
             return Err(e);
         }
 
-        if let Err(e) = execute_command("push", &["--tags"], "Failed to push --tags to git") {
+        if let Err(e) = execute_command("git", &["push", "--tags"], "Failed to push --tags to git")
+        {
             return Err(e);
         }
     }
