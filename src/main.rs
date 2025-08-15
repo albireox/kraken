@@ -8,7 +8,7 @@ use crate::cli::{Args, Parser};
 use crate::config::update_config;
 use crate::tools::{
     bump_to_prerelease, check_uv_version, exit_with_error, get_package_version,
-    git_add_commit_tag_push, read_pyproject, update_version,
+    get_release_version, git_add_commit_tag_push, read_pyproject, update_version,
 };
 use colored::Colorize;
 
@@ -33,19 +33,26 @@ fn main() {
     // Update the kraken configuration based on command line arguments.
     update_config(&args, &mut kraken_config);
 
+    let new_version: String;
+    if let None = args.new_version {
+        new_version = get_release_version(&pyproject.project.version.as_str()).unwrap();
+    } else {
+        new_version = args.new_version.unwrap();
+    }
+
     // Update the changelog version.
-    if let Err(e) = update_changelog(&args.new_version, &kraken_config) {
+    if let Err(e) = update_changelog(&new_version, &kraken_config) {
         exit_with_error(e);
     };
 
     // Update the version in pyproject.toml using uv.
-    if let Err(e) = update_version(&args.new_version) {
+    if let Err(e) = update_version(&new_version) {
         exit_with_error(e);
     }
 
     // Add, commit, and push changes to the git repository.
     if let Some(true) = kraken_config.commit_changes {
-        let commit_message = format!("Release {}", args.new_version);
+        let commit_message = format!("Release {}", new_version);
         if let Err(e) = git_add_commit_tag_push(commit_message, true) {
             exit_with_error(e);
         }

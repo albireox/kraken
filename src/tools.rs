@@ -183,3 +183,34 @@ pub fn bump_to_prerelease() -> Result<(), String> {
 
     Ok(())
 }
+
+pub fn get_release_version(version: &str) -> Result<String, String> {
+    // Returns the release version by removing the pre-release suffix if it exists.
+
+    let version = Version::from(version);
+    if let None = version {
+        return Err(format!("Failed to parse version"));
+    }
+
+    let parts = version.as_ref().unwrap().parts();
+    let release_version = format!("{}.{}.{}", parts[0], parts[1], parts[2]);
+
+    Ok(release_version)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_release_version() {
+        let result = get_release_version("1.0.0-alpha.1").unwrap();
+        assert_eq!(result, "1.0.0");
+
+        let result = get_release_version("1.0.0a1").unwrap();
+        assert_eq!(result, "1.0.0");
+
+        let result = get_release_version("1.0.0-dev1").unwrap();
+        assert_eq!(result, "1.0.0");
+    }
+}

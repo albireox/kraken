@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 pub struct Args {
     /// Version to release.
     #[arg()]
-    pub new_version: String,
+    pub new_version: Option<String>,
 
     /// Changelog date format.
     #[arg(long, value_enum)]
