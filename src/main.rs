@@ -53,6 +53,12 @@ fn main() {
     // Add, commit, and push changes to the git repository.
     if let Some(true) = kraken_config.commit_changes {
         let commit_message = format!("Release {}", new_version);
+
+        println!(
+            "{}",
+            format!("Tagging version {}", new_version).bright_black()
+        );
+
         if let Err(e) = git_add_commit_tag_push(commit_message, true) {
             exit_with_error(e);
         }
