@@ -46,4 +46,6 @@ pub enum ChangelogDateFormat {
     Long,
     /// Short format date, e.g. 2025-06-21.
     Short,
+    /// Short format date in parentheses, e.g. (2025-06-21).
+    ShortParens,
 }

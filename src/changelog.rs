@@ -17,11 +17,14 @@ pub fn determine_changelog_date_format(
 
     let re_short = Regex::new(r"#+.*\s*-\s*(\d{4}-\d{2}-\d{2})").unwrap();
     let re_long = Regex::new(r"#+.*\s*-\s*([A-Za-z]+ \d{1,2}, \d{4})").unwrap();
+    let re_short_parens = Regex::new(r"#+.*\s*\((\d{4}-\d{2}-\d{2})\)").unwrap();
 
     if re_short.is_match(&contents) {
         return Ok(ChangelogDateFormat::Short);
     } else if re_long.is_match(&contents) {
         return Ok(ChangelogDateFormat::Long);
+    } else if re_short_parens.is_match(&contents) {
+        return Ok(ChangelogDateFormat::ShortParens);
     }
 
     // If no date format is found, exit with an error.
@@ -37,6 +40,7 @@ pub fn update_changelog(new_version: &str, config: &KrakenConfig) -> Result<(), 
     let formatted_date = match date_format {
         ChangelogDateFormat::Long => current_date.format("%B %-d, %Y").to_string(),
         ChangelogDateFormat::Short => current_date.format("%Y-%m-%d").to_string(),
+        ChangelogDateFormat::ShortParens => format!("({})", current_date.format("%Y-%m-%d")),
         _ => return Err("Unsupported date format for changelog.".to_string()),
     };
 
@@ -62,10 +66,13 @@ pub fn update_changelog(new_version: &str, config: &KrakenConfig) -> Result<(), 
     // Replace the "Next release" header with the current date.
     let next_release_replace_re =
         Regex::new(r"(?mi)^(#+\s*)(Next (release|version)).*\n$").unwrap();
-    let updated_contents = next_release_replace_re.replace(
-        &contents,
-        format!("${{1}}{} - {}\n", new_version, formatted_date),
-    );
+
+    let new_header = match date_format {
+        ChangelogDateFormat::ShortParens => format!("${{1}}{} ({})\n", new_version, formatted_date),
+        _ => format!("${{1}}{} - {}\n", new_version, formatted_date),
+    };
+
+    let updated_contents = next_release_replace_re.replace(&contents, new_header);
 
     // Replace the contents of the changelog file.
     if let Err(e) = std::fs::write(changelog_path, updated_contents.as_bytes()) {
