@@ -19,12 +19,12 @@ pub fn determine_changelog_date_format(
     let re_long = Regex::new(r"#+.*\s*-\s*([A-Za-z]+ \d{1,2}, \d{4})").unwrap();
     let re_short_parens = Regex::new(r"#+.*\s*\((\d{4}-\d{2}-\d{2})\)").unwrap();
 
-    if re_short.is_match(&contents) {
+    if re_short_parens.is_match(&contents) {
+        return Ok(ChangelogDateFormat::ShortParens);
+    } else if re_short.is_match(&contents) {
         return Ok(ChangelogDateFormat::Short);
     } else if re_long.is_match(&contents) {
         return Ok(ChangelogDateFormat::Long);
-    } else if re_short_parens.is_match(&contents) {
-        return Ok(ChangelogDateFormat::ShortParens);
     }
 
     // If no date format is found, exit with an error.
